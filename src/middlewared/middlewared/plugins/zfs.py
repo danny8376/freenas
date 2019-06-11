@@ -424,8 +424,9 @@ class ZFSDatasetService(CRUDService):
     def query(self, filters=None, options=None):
         # If we are only filtering by name, pool and type we can use
         # zfs(8) which is much faster than py-libzfs
+        options = options or {}
         if (
-            options and set(options['select']).issubset({'name', 'pool', 'type'}) and
+            options and set(options.get('select', [])).issubset({'name', 'pool', 'type'}) and
             filter_getattrs(filters).issubset({'name', 'pool', 'type'})
         ):
             cp = subprocess.run([
@@ -441,15 +442,21 @@ class ZFSDatasetService(CRUDService):
                     'type': type_.upper(),
                 })
         else:
+            extra = options.pop('extra', {})
+            state_options = {
+                'snapshots': extra.pop('snapshots', False),
+                'recursive': extra.pop('recursive', True),
+                'snapshots_recursive': extra.pop('snapshots_recursive', False)
+            }
             with libzfs.ZFS() as zfs:
                 # Handle `id` filter specially to avoiding getting all datasets
                 if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                     try:
-                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                        datasets = [zfs.get_dataset(filters[0][2]).__getstate__(**state_options)]
                     except libzfs.ZFSException:
                         datasets = []
                 else:
-                    datasets = [i.__getstate__() for i in zfs.datasets]
+                    datasets = [i.__getstate__(**state_options) for i in zfs.datasets]
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
