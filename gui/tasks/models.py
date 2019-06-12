@@ -314,6 +314,10 @@ class InitShutdown(Model):
         verbose_name='Timeout',
         help_text='Automatically stop the script or command after the specified seconds.'
     )
+    ini_comment = models.TextField(
+        blank=True,
+        verbose_name='Comment',
+    )
 
     def __str__(self):
         if self.ini_type == 'command':

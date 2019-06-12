@@ -22,6 +22,7 @@ class InitShutdownScriptService(CRUDService):
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         Int('timeout', default=10),
+        Str('comment'),
         register=True,
     ))
     async def do_create(self, data):
